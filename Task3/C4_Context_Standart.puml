@@ -1,0 +1,28 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/refs/heads/master/C4_Container.puml
+
+Person(Customer, "Клиент")
+Person(CallcenterStaff, "Работник колл-центра")
+Person(ExtCallcenterStaff, "Работник партнёрского колл-центра")
+Person(FrontofficeStaff, "Работник фронт-оффиса")
+Person(BackofficeStaff, "Работник бэк-оффиса")
+
+System(Site, "Сайт Банка")
+System(BankSystems, "Внутренние системы Банка")
+System_Ext(SMSOperator, "Телеком оператор")
+System_Ext(ExtCallcenter, "Партнёрский кол-центр")
+
+Rel(Customer, Site, "Заводит заявку на сайте")
+Rel(CallcenterStaff, BankSystems, "Работает в сервисах колл-центра")
+Rel(FrontofficeStaff, BankSystems, "Работает в сервисах фронт-офиса")
+Rel(ExtCallcenterStaff, ExtCallcenter, "Работает в сервисах фронт-офиса")
+Rel(ExtCallcenter, BankSystems, "Корректирует информацию по заявке клиента")
+Rel(BackofficeStaff, BankSystems, "Работает в сервисах бэк-офиса")
+Rel(Site, BankSystems, "Использует внутренние системы")
+Rel(CallcenterStaff, Customer, "Звонит клиенту")
+Rel(ExtCallcenterStaff, Customer, "Звонит клиенту")
+Rel(Customer, FrontofficeStaff, "Общается с работником фронт-офиса")
+Rel(BankSystems, SMSOperator, "Инициирует отправку уведомлений")
+Rel(SMSOperator, Customer, "Отправляет информационные СМС")
+
+@enduml

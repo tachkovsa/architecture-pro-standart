@@ -1,0 +1,66 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/refs/heads/master/C4_Container.puml
+
+Person(Customer, "Клиент")
+Person(CallcenterStaff, "Работник колл-центра")
+Person(ExtCallcenterStaff, "Работник партнёрского колл-центра")
+Person(FrontofficeStaff, "Работник фронт-оффиса")
+Person(BackofficeStaff, "Работник бэк-оффиса")
+
+System_Boundary(Bank, "Внутренняя инфраструктура") {
+    System_Boundary(SiteSystem, "Сайт банка") {
+        Container(Frontend, "Фронтенд", React)
+        Container(SiteAPIGateway, "API-шлюз сайта", Kong)
+        Container(Backend, "Бекенд", PHP)
+    }
+
+    System_Boundary(Callcenter, "Колл-центр") {
+        Container(CallcenterFrontend, "Фронтенд", React)
+        Container(CallcenterBackend, "Бекенд", Java Spring Boot)
+        ContainerDb(CallcenterDb, "База данных колл-центра", PostgreSQL)
+    }
+    
+    System_Boundary(RequestServices, "Сервисы обработки заявок") {
+        Container(RequestSystem, "Система обработки заявок", Golang)
+        ContainerDb(RequestSystemDb, "База данных заявок", MongoDb)
+    }
+
+    System_Boundary(ABSSystem, "АБС") {
+        Container(ABSDesktop, "Desktop-клиент", Delphi)
+        Container(ABSProxy, "Reverse Proxy", Nginx)
+        ContainerDb(ABSDb, "База данных АБС", Oracle)
+    }
+
+    System(SMS, "СМС-шлюз")
+}
+
+System_Ext(ExtCallcenter, "Партнёрский кол-центр")
+System_Ext(SMSOperator, "Телеком оператор")
+
+Rel(Frontend, SiteAPIGateway, "Использует API-шлюз сайта")
+Rel(SiteAPIGateway, Backend, "Перенаправляет запросы пользователя к backend")
+Rel(SiteAPIGateway, RequestSystem, "Перенаправляет запросы пользователя к системе обработки заявок")
+
+Rel(Customer, Frontend, "Заводит заявку на сайте")
+Rel(Customer, FrontofficeStaff, "Общается с работником фронт-офиса")
+Rel(CallcenterStaff, CallcenterFrontend, "Подтверждает заявку на депозит")
+Rel(CallcenterStaff, Customer, "Звонит клиенту")
+Rel(ExtCallcenterStaff, ExtCallcenter, "Подтверждает заявку на депозит")
+Rel(ExtCallcenterStaff, Customer, "Звонит клиенту")
+Rel(ABSDesktop, RequestSystem, "Меняет статус заявки на депозит")
+Rel(FrontofficeStaff, ABSDesktop, "Создаёт карточку клиента в системе")
+Rel(BackofficeStaff, ABSDesktop, "Открывает депозит клиенту в системе")
+Rel(BackofficeStaff, ABSDesktop, "Закрывает заявку на открытие депозита")
+Rel(RequestSystem, SMS, "Инициирует отправку уведомлений о смене статуса заявки")
+Rel(SMS, SMSOperator, "Инициирует отправку информационных уведомлений")
+Rel(CallcenterFrontend, CallcenterBackend, "Использует бекенд колл-центра")
+Rel(CallcenterBackend, CallcenterDb, "Использует базу данных колл-центра")
+Rel(CallcenterBackend, RequestSystem, "Меняет статус заявки на депозит")
+
+Rel(ABSDesktop, ABSProxy, "Отправляет запросы к БД через proxy")
+Rel(ABSProxy, ABSDb, "Отправляет запросы к БД АБС")
+Rel(RequestSystem, RequestSystemDb, "Использует базу данных заявок")
+
+Rel(ExtCallcenter, RequestSystem, "Меняет статус заявки на депозит")
+
+@enduml
