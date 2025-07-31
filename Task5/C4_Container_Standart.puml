@@ -1,0 +1,80 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/refs/heads/master/C4_Container.puml
+
+Person(Customer, "Клиент")
+Person(FrontofficeStaff, "Работник фронт-офиса")
+Person(BackofficeStaff, "Работник отдела кредитования")
+
+System_Boundary(Bank, "Внутренняя инфраструктура") {
+    System_Boundary(SiteSystem, "Сайт банка") {
+        Container(SiteFrontend, "Фронтенд", React)
+        Container(SiteBackend, "Бекенд", PHP)
+    }
+
+    System_Boundary(InternetBank, "Интернет-банк") {
+        Container(InternetBankFront, "Интернет банк", ASP.NET)
+        ContainerDb(InternetBankDb, "База данных", MS SQL Server)
+    }
+
+    System_Boundary(CreditConveyor, "Кредитный конвейер") {
+        Container(CreditConveyorFront, "Кредитный конвейер", Camunda / Java)
+        ContainerDb(CreditConveyorDb, "База данных", Oracle)
+    }
+
+    System_Boundary(CreditScoring, "Система кредитного скоринга") {
+        Container(CreditScoringBackend, "Система кредитного скоринга", Python / Flask)
+        ContainerDb(CreditScoringDb, "База данных", PostgreSQL)
+    }
+
+    System_Boundary(ABSSystem, "АБС") {
+        Container(ABSDesktop, "Desktop-клиент", Delphi)
+        Container(ABSProxy, "Reverse Proxy", Nginx)
+        ContainerDb(ABSDb, "База данных АБС", Oracle)
+    }
+
+    System_Boundary(CreditService, "Сервис кредитных ставок") {
+        Container(CreditServiceBackend, "Сервис кредитных ставок", Python)
+        ContainerDb(CreditServiceDb, "База данных", PostgreSQL)
+    }
+
+    System(SMS, "СМС-шлюз")
+    System(Kafka, "Брокер сообщений")
+}
+
+System_Ext(SMSOperator, "Телеком оператор")
+System_Ext(CreditBuro, "Бюро кредитных историй")
+
+Rel(Customer, SiteFrontend, "Подает заявку на кредит", "Для новых клиентов")
+Rel(Customer, InternetBankFront, "Подает заявку на кредит", "Для действующих клиентов")
+
+Rel(SiteFrontend, SiteBackend, "Отправляет запросы на сервер")
+Rel(InternetBankFront, InternetBankDb, "Передаёт информацию в базу данных")
+
+Rel(Customer, FrontofficeStaff, "Обращается в офис для идентификации")
+Rel(FrontofficeStaff, ABSDesktop, "Идентифицирует клиента")
+
+Rel(ABSDesktop, ABSProxy, "Отправляет запросы на сервер")
+Rel(ABSProxy, ABSDb, "Передает информацию в базу данных")
+
+Rel(CreditScoringBackend, CreditScoringDb, "Передаёт информацию в базу данных")
+Rel(FrontofficeStaff, ABSDesktop, "Работает с данными клиента и заявкой на кредит")
+
+Rel(CreditConveyorFront, CreditConveyorDb, "Передает информацию в базу данных")
+Rel(CreditServiceBackend, CreditServiceDb, "Передает информацию в базу данных")
+
+Rel(ABSSystem, SMS, "Отправляет данные по заявке для передачи клиенту")
+Rel(CreditScoringBackend, CreditBuro, "Запрашивает информацию из бюро кредитных историй")
+Rel(SMS, SMSOperator, "Инициирует отправку СМС-сообщений")
+Rel(SMSOperator, Customer, "Отправляет СМС-сообщений")
+
+Rel(SiteBackend, Kafka, "Передаёт информацию в кредитный конвейер")
+Rel(InternetBank, Kafka, "Передает информацию в кредитный конвейер")
+Rel(CreditConveyor, Kafka, "Читает очередь заявок на кредит")
+Rel(CreditConveyor, ABSSystem, "Передаёт информацию о ставках для клиента")
+Rel(CreditService, ABSSystem, "Периодически запрашивает информацию о клиентах")
+Rel(CreditService, ABSSystem, "Периодически направляет предложения для клиентов")
+Rel(CreditService, Kafka, "Периодически направляет запрос на пересчёт ставок для клиентов")
+Rel(CreditScoring, Kafka, "Читает очередь запросов на перерасчёт ставок")
+Rel(BackofficeStaff, ABSDesktop, "Работает с данными клиента и заявкой на кредит")
+
+@enduml
