@@ -1,0 +1,46 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/refs/heads/master/C4_Container.puml
+
+Person(Customer, "Клиент")
+Person(CallcenterStaff, "Работник колл-центра")
+Person(ExtCallcenterStaff, "Работник партнёрского колл-центра")
+Person(BackofficeStaff, "Работник бэк-оффиса")
+
+System_Boundary(Bank, "Внутренняя инфраструктура") {
+    System_Boundary(Callcenter, "Колл-центр") {
+        Container(CallcenterFrontend, "Фронтенд", React)
+        Container(CallcenterBackend, "Бекенд", Java Spring Boot)
+        ' ContainerDb(CallcenterDb, "База данных колл-центра", PostgreSQL)
+    }
+    
+    System_Boundary(DepositService, "Сервис работы со ставками") {
+        Container(DepositSystem, "Система обработки ставок", Golang)
+    }
+    ContainerDb(DepositDb, "База данных ставок", Redis)
+
+    System_Boundary(ABSSystem, "АБС") {
+        Container(ABSDesktop, "Desktop-клиент", Delphi)
+        ' Container(ABSProxy, "Reverse Proxy", Nginx)
+        ' ContainerDb(ABSDb, "База данных АБС", Oracle)
+    }
+
+    System(EMAIL, "EMail-шлюз")
+}
+
+System_Ext(ExtCallcenter, "Партнёрский кол-центр")
+System_Ext(ExtEMAIL, "Партнёрский почтовый сервер")
+
+Rel(Customer, CallcenterStaff, "Обращается к работнику колл-центра")
+Rel(Customer, ExtCallcenterStaff, "Обращается к работнику партн-колл-центра")
+Rel(CallcenterStaff, CallcenterFrontend, "Работает в системе пол-центра")
+Rel(CallcenterFrontend, CallcenterBackend, "Запрашивает информацию по актуальным ставкам")
+Rel(ExtCallcenterStaff, ExtCallcenter, "Работает в партн-кол-центре")
+Rel(CallcenterBackend, DepositDb, "Получает актуальные ставки по депозитам")
+Rel(DepositSystem, DepositDb, "Сохраняет актуальные ставки в базу данных")
+Rel(DepositSystem, EMAIL, "Инициирует отправку актуальных ставок")
+Rel(EMAIL, ExtEMAIL, "Отправляет актуальные ставки")
+Rel(BackofficeStaff, ABSDesktop, "Вводит информацию по актуальным ставкам")
+Rel(ABSDesktop, DepositSystem, "Отправляет информацию по актуальным ставкам")
+Rel(ExtCallcenter, ExtEMAIL, "Обрабатывает файл со ставками")
+
+@enduml
